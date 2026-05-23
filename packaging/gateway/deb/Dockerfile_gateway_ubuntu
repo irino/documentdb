@@ -5,6 +5,10 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update; \
     apt-get install -y --no-install-recommends software-properties-common jq curl sudo git make wget build-essential openssl pkg-config libssl-dev ca-certificates lsb-release gnupg2; \
+    RELEASE=$(lsb_release -rs); \
+    if [ $RELEASE = 26.04 ]; then \
+      apt install -y --no-install-recommends clang-22 lldb-22 lld-22 clangd-22 clang-tidy-22 clang-format-22 clang-tools-22 llvm-22-dev lld-22 lldb-22 llvm-22-tools libomp-22-dev libc++-22-dev libc++abi-22-dev libclang-common-22-dev libclang-22-dev libclang-cpp22-dev liblldb-22-dev libunwind-22-dev libclang-rt-22-dev libpolly-22-dev; \
+    fi; \
     rm -rf /var/lib/apt/lists/*
 
 RUN useradd -ms /bin/bash documentdb -G sudo
@@ -16,8 +20,10 @@ WORKDIR /home/documentdb/code
 COPY . /home/documentdb/code
 
 RUN sudo chmod +x /home/documentdb/code/scripts/*.sh
-RUN /home/documentdb/code/scripts/install_llvm.sh
-
+RUN RELEASE=$(lsb_release -rs) && \
+    if [ $RELEASE != 26.04 ]; then \
+      /home/documentdb/code/scripts/install_llvm.sh; \
+    fi
 # Install rustup (which includes rustc and cargo) in user directory
 ENV RUSTUP_HOME=/home/documentdb/.rustup
 ENV CARGO_HOME=/home/documentdb/.cargo
